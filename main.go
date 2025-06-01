@@ -2,19 +2,32 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+	"log"
+	"net"
 )
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %s!", r.URL.Path[1:])
-	})
-	// Start the server on port 8080
-	err := http.ListenAndServe(":8080", nil)
+	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
-		fmt.Println("Error starting server:", err)
-	} else {
-		fmt.Println("Server started on port 8080")
+		log.Fatal("Failed to bind to port 8080: ", err)
 	}
+	defer listener.Close()
 
+	log.Println("Server listening on 8080")
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Println("Failed to accept connection: ", err)
+			continue
+		}
+
+		go handleConnection(conn)
+	}
+}
+
+func handleConnection(conn net.Conn) {
+	defer conn.Close()
+
+	fmt.Println("Accepted connection from: ", conn.RemoteAddr())
 }
